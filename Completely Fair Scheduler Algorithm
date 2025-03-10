@@ -1,0 +1,50 @@
+#include <iostream>
+#include <set>
+#include <string>
+
+struct Task
+{
+    std::string name;
+    int vruntime;
+
+    // Operator for ordering by vruntime
+    bool operator<(const Task &other) const
+    {
+        return vruntime < other.vruntime;
+    }
+};
+
+int main()
+{
+    std::multiset<Task> taskTree; // Red-Black Tree-based container (multiset)
+
+    // Insert tasks
+    taskTree.insert({"A", 5});
+    taskTree.insert({"B", 10});
+    taskTree.insert({"C", 7});
+
+    // Simulate scheduling with constant quantum of +2 for vruntime
+    for (int i = 0; i < 3; ++i) // Run 3 iterations as an example
+    {
+        // Check if there are any tasks left in the tree
+        if (taskTree.empty()) {
+            std::cout << "No tasks remaining!\n";
+            break;
+        }
+
+        // Get the task with the smallest vruntime (leftmost node)
+        auto it = taskTree.begin();
+        Task current = *it;
+        std::cout << "Running Task " << current.name
+                  << " (vruntime: " << current.vruntime << ")\n";
+
+        // Remove the task and update its vruntime
+        taskTree.erase(it);
+        current.vruntime += 2;  // Apply the constant quantum (increase by 2)
+        
+        // Re-insert the task with the updated vruntime, which will reorder it automatically
+        taskTree.insert(current);
+    }
+
+    return 0;
+}
