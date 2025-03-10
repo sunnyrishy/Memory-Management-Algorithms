@@ -1,0 +1,72 @@
+#include <iostream>
+#include <queue>
+#include <unordered_set>
+
+using namespace std;
+
+class MultiQueueLRU {
+    int hotSize, warmSize, coldSize;
+    queue<int> hot, warm, cold;
+    unordered_set<int> cache;
+
+public:
+    MultiQueueLRU(int h, int w, int c) : hotSize(h), warmSize(w), coldSize(c) {}
+
+    void accessPage(int page) {
+        if (cache.find(page) != cache.end()) {
+            cout << "Page " << page << " accessed, moving to HOT queue.\n";
+            return;
+        }
+
+        cout << "Adding Page " << page << " to cache.\n";
+        cache.insert(page);
+        hot.push(page);
+
+        if (hot.size() > hotSize) {
+            warm.push(hot.front());
+            hot.pop();
+        }
+
+        if (warm.size() > warmSize) {
+            cold.push(warm.front());
+            warm.pop();
+        }
+
+        if (cold.size() > coldSize) {
+            cout << "Evicting Page " << cold.front() << " from cache.\n";
+            cache.erase(cold.front());
+            cold.pop();
+        }
+    }
+
+    void display() {
+        cout << "\nHot Queue: ";
+        queue<int> temp = hot;
+        while (!temp.empty()) { cout << temp.front() << " "; temp.pop(); }
+
+        cout << "\nWarm Queue: ";
+        temp = warm;
+        while (!temp.empty()) { cout << temp.front() << " "; temp.pop(); }
+
+        cout << "\nCold Queue: ";
+        temp = cold;
+        while (!temp.empty()) { cout << temp.front() << " "; temp.pop(); }
+
+        cout << "\n";
+    }
+};
+
+int main() {
+    MultiQueueLRU cache(2, 2, 2);
+
+    cache.accessPage(1);
+    cache.accessPage(2);
+    cache.accessPage(3);
+    cache.display();
+
+    cache.accessPage(4);
+    cache.accessPage(5); // Eviction happens
+    cache.display();
+
+    return 0;
+}
