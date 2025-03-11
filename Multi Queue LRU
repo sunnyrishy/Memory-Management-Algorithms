@@ -1,25 +1,31 @@
 #include <iostream>
 #include <queue>
-#include <unordered_set>
+#include <unordered_map>
+#include<bits/stdc++.h>
 
 using namespace std;
 
 class MultiQueueLRU {
     int hotSize, warmSize, coldSize;
     queue<int> hot, warm, cold;
-    unordered_set<int> cache;
+    unordered_map<int, int> accessTime; // Track last access time
+    int timeCounter = 0;
 
 public:
     MultiQueueLRU(int h, int w, int c) : hotSize(h), warmSize(w), coldSize(c) {}
 
     void accessPage(int page) {
-        if (cache.find(page) != cache.end()) {
+        timeCounter++;
+        accessTime[page] = timeCounter; // Update access time
+
+        // If the page is already in cache, move it to hot queue
+        if (isInQueue(hot, page) || isInQueue(warm, page) || isInQueue(cold, page)) {
             cout << "Page " << page << " accessed, moving to HOT queue.\n";
+            moveToHotQueue(page);
             return;
         }
 
         cout << "Adding Page " << page << " to cache.\n";
-        cache.insert(page);
         hot.push(page);
 
         if (hot.size() > hotSize) {
@@ -33,26 +39,72 @@ public:
         }
 
         if (cold.size() > coldSize) {
-            cout << "Evicting Page " << cold.front() << " from cache.\n";
-            cache.erase(cold.front());
-            cold.pop();
+            evictLeastUsedFromCold();
         }
     }
 
+    void evictLeastUsedFromCold() {
+        int leastUsedPage = -1, minTime = INT_MAX;
+        queue<int> temp;
+
+        // Identify least recently used page in the cold queue
+        while (!cold.empty()) {
+            int front = cold.front(); cold.pop();
+            if (accessTime[front] < minTime) {
+                minTime = accessTime[front];
+                leastUsedPage = front;
+            }
+            temp.push(front);
+        }
+
+        // Rebuild cold queue without the least used page
+        while (!temp.empty()) {
+            int front = temp.front(); temp.pop();
+            if (front != leastUsedPage) {
+                cold.push(front);
+            }
+        }
+
+        if (leastUsedPage != -1) {
+            cout << "Evicting Page " << leastUsedPage << " from cache.\n";
+            accessTime.erase(leastUsedPage);
+        }
+    }
+
+    void moveToHotQueue(int page) {
+        queue<int> temp;
+        removeFromQueue(warm, page, temp);
+        removeFromQueue(cold, page, temp);
+        hot.push(page);
+    }
+
+    void removeFromQueue(queue<int> &q, int page, queue<int> &temp) {
+        while (!q.empty()) {
+            int front = q.front(); q.pop();
+            if (front != page) temp.push(front);
+        }
+        while (!temp.empty()) {
+            q.push(temp.front()); temp.pop();
+        }
+    }
+
+    bool isInQueue(queue<int> q, int page) {
+        while (!q.empty()) {
+            if (q.front() == page) return true;
+            q.pop();
+        }
+        return false;
+    }
+
     void display() {
-        cout << "\nHot Queue: ";
-        queue<int> temp = hot;
-        while (!temp.empty()) { cout << temp.front() << " "; temp.pop(); }
-
-        cout << "\nWarm Queue: ";
-        temp = warm;
-        while (!temp.empty()) { cout << temp.front() << " "; temp.pop(); }
-
-        cout << "\nCold Queue: ";
-        temp = cold;
-        while (!temp.empty()) { cout << temp.front() << " "; temp.pop(); }
-
+        cout << "\nHot Queue: "; displayQueue(hot);
+        cout << "\nWarm Queue: "; displayQueue(warm);
+        cout << "\nCold Queue: "; displayQueue(cold);
         cout << "\n";
+    }
+
+    void displayQueue(queue<int> q) {
+        while (!q.empty()) { cout << q.front() << " "; q.pop(); }
     }
 };
 
@@ -66,6 +118,11 @@ int main() {
 
     cache.accessPage(4);
     cache.accessPage(5); // Eviction happens
+    cache.display();
+
+    cache.accessPage(6);
+    cache.display();
+    cache.accessPage(7);
     cache.display();
 
     return 0;
