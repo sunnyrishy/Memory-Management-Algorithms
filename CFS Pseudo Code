@@ -1,0 +1,38 @@
+BEGIN
+
+DEFINE STRUCT Task
+    name      // Task name
+    vruntime  // Virtual runtime (execution time tracker)
+
+    OPERATOR < (other Task)
+        RETURN true if vruntime < other.vruntime
+
+DEFINE FUNCTION displayTasks(taskTree)
+    PRINT "Current Task Queue:"
+    FOR each task in taskTree
+        PRINT task name and vruntime
+    PRINT "--------------------------"
+
+MAIN FUNCTION
+    CREATE taskTree (ordered by vruntime)
+
+    // Insert tasks into taskTree
+  
+    CALL displayTasks(taskTree)
+
+    FOR // Run multiple scheduling cycles
+        IF taskTree is empty THEN
+            PRINT "No tasks remaining!"
+            BREAK
+
+        GET task with the smallest vruntime (leftmost node)
+        PRINT "Running Task" with name and vruntime
+
+        REMOVE the selected task from taskTree
+        INCREASE its vruntime by 2 (quantum time)
+
+        RE-INSERT the task into taskTree (to maintain order)
+
+        CALL displayTasks(taskTree)
+
+END
