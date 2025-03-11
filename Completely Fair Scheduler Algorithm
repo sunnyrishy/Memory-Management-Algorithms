@@ -14,6 +14,16 @@ struct Task
     }
 };
 
+void displayTasks(const std::multiset<Task> &taskTree)
+{
+    std::cout << "Current Task Queue:\n";
+    for (const auto &task : taskTree)
+    {
+        std::cout << "Task " << task.name << " (vruntime: " << task.vruntime << ")\n";
+    }
+    std::cout << "--------------------------\n";
+}
+
 int main()
 {
     std::multiset<Task> taskTree; // Red-Black Tree-based container (multiset)
@@ -22,9 +32,12 @@ int main()
     taskTree.insert({"A", 5});
     taskTree.insert({"B", 10});
     taskTree.insert({"C", 7});
+    taskTree.insert({"D", 3}); // Added another task for better demonstration
+
+    displayTasks(taskTree);
 
     // Simulate scheduling with constant quantum of +2 for vruntime
-    for (int i = 0; i < 3; ++i) // Run 3 iterations as an example
+    for (int i = 0; i < 5; ++i) // Run more iterations for a better demo
     {
         // Check if there are any tasks left in the tree
         if (taskTree.empty()) {
@@ -44,6 +57,8 @@ int main()
         
         // Re-insert the task with the updated vruntime, which will reorder it automatically
         taskTree.insert(current);
+
+        displayTasks(taskTree);
     }
 
     return 0;
