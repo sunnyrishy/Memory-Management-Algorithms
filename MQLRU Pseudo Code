@@ -1,0 +1,45 @@
+BEGIN
+
+DEFINE CLASS MultiQueueLRU
+    INITIALIZE hotQueue, warmQueue, coldQueue as empty queues
+    INITIALIZE hotSize, warmSize, coldSize
+    INITIALIZE accessTime map (to track page access time)
+    INITIALIZE timeCounter to 0
+
+    FUNCTION accessPage(page)
+        INCREMENT timeCounter
+        UPDATE accessTime for page
+
+        IF page exists in any queue THEN
+            MOVE page to hotQueue
+            RETURN
+
+        ADD page to hotQueue
+
+        IF hotQueue exceeds hotSize THEN
+            MOVE oldest page from hotQueue to warmQueue
+
+        IF warmQueue exceeds warmSize THEN
+            MOVE oldest page from warmQueue to coldQueue
+
+        IF coldQueue exceeds coldSize THEN
+            CALL evictLeastUsedFromCold()
+
+    FUNCTION evictLeastUsedFromCold()
+        FIND least recently used page in coldQueue
+        REMOVE that page from coldQueue and accessTime
+
+    FUNCTION moveToHotQueue(page)
+        REMOVE page from warmQueue or coldQueue
+        ADD page to hotQueue
+
+    FUNCTION displayQueues()
+        PRINT hotQueue, warmQueue, coldQueue
+
+MAIN FUNCTION
+    CREATE MultiQueueLRU with given sizes
+
+    CALL accessPage() for multiple pages
+    CALL displayQueues() to show queue contents
+
+END
