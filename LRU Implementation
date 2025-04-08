@@ -1,0 +1,62 @@
+#include <iostream>
+#include <list>
+#include <unordered_map>
+using namespace std;
+
+void printQueue(const list<int>& pageQueue) {
+    cout << "Current Queue: [ ";
+    for (int page : pageQueue) {
+        cout << page << " ";
+    }
+    cout << "]" << endl;
+}
+
+void LRUPageReplacement(int pages[], int n, int capacity) {
+    list<int> pageQueue;  // to store pages (front = most recently used)
+    unordered_map<int, list<int>::iterator> pageMap; // fast lookup
+    int pageFaults = 0;
+
+    cout << "Processing page sequence:\n";
+    for (int i = 0; i < n; i++) {
+        int currentPage = pages[i];
+        cout << "\nAccessing Page: " << currentPage << endl;
+
+        // Page Fault
+        if (pageMap.find(currentPage) == pageMap.end()) {
+            cout << "→ MISS (Page Fault)" << endl;
+            pageFaults++;
+
+            // If queue is full, remove the LRU page
+            if (pageQueue.size() == capacity) {
+                int lru = pageQueue.back();
+                cout << "→ Removing LRU Page: " << lru << endl;
+                pageQueue.pop_back();
+                pageMap.erase(lru);
+            }
+        }
+        // Page Hit
+        else {
+            cout << "→ HIT (Page Already in Memory)" << endl;
+            // Remove it from current position to reinsert at front
+            pageQueue.erase(pageMap[currentPage]);
+        }
+
+        // Insert the current page at the front
+        pageQueue.push_front(currentPage);
+        pageMap[currentPage] = pageQueue.begin();
+
+        printQueue(pageQueue);
+    }
+
+    cout << "\nTotal Page Faults: " << pageFaults << endl;
+}
+
+int main() {
+    int pages[] = {2, 3, 2, 1, 5, 2, 4, 5, 3, 2, 5, 2};
+    int n = sizeof(pages) / sizeof(pages[0]);
+    int capacity = 3;
+
+    LRUPageReplacement(pages, n, capacity);
+
+    return 0;
+}
