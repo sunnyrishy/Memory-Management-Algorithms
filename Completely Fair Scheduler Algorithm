@@ -1,65 +1,60 @@
 #include <iostream>
-#include <set>
-#include <string>
+#include <vector>
+#include <algorithm>
 
-struct Task
-{
-    std::string name;
-    int vruntime;
+using namespace std;
 
-    // Operator for ordering by vruntime
-    bool operator<(const Task &other) const
-    {
-        return vruntime < other.vruntime;
-    }
+struct Process {
+    int pid;
+    int burstTime;         // Total time needed
+    int executedTime = 0;  // Time it has run
+    int vruntime = 0;      // Virtual runtime
 };
 
-void displayTasks(const std::multiset<Task> &taskTree)
-{
-    std::cout << "Current Task Queue:\n";
-    for (const auto &task : taskTree)
-    {
-        std::cout << "Task " << task.name << " (vruntime: " << task.vruntime << ")\n";
-    }
-    std::cout << "--------------------------\n";
+// Comparator: process with least vruntime gets scheduled first
+bool compareVruntime(const Process& a, const Process& b) {
+    return a.vruntime < b.vruntime;
 }
 
-int main()
-{
-    std::multiset<Task> taskTree; // Red-Black Tree-based container (multiset)
+void simulateCFS(vector<Process>& processes, int timeSlice) {
+    cout << "Simulating CFS Scheduling:\n";
 
-    // Insert tasks
-    taskTree.insert({"A", 5});
-    taskTree.insert({"B", 10});
-    taskTree.insert({"C", 7});
-    taskTree.insert({"D", 3}); // Added another task for better demonstration
+    while (true) {
+        // Remove finished processes
+        processes.erase(
+            remove_if(processes.begin(), processes.end(),
+                      [](const Process& p) { return p.executedTime >= p.burstTime; }),
+            processes.end());
 
-    displayTasks(taskTree);
+        if (processes.empty()) break;
 
-    // Simulate scheduling with constant quantum of +2 for vruntime
-    for (int i = 0; i < 5; ++i) // Run more iterations for a better demo
-    {
-        // Check if there are any tasks left in the tree
-        if (taskTree.empty()) {
-            std::cout << "No tasks remaining!\n";
-            break;
-        }
+        // Sort by virtual runtime (CFS style)
+        sort(processes.begin(), processes.end(), compareVruntime);
 
-        // Get the task with the smallest vruntime (leftmost node)
-        auto it = taskTree.begin();
-        Task current = *it;
-        std::cout << "Running Task " << current.name
-                  << " (vruntime: " << current.vruntime << ")\n";
+        // Pick the process with lowest vruntime
+        Process& current = processes.front();
+        cout << "Running Process P" << current.pid << " for " << timeSlice << "ms\n";
 
-        // Remove the task and update its vruntime
-        taskTree.erase(it);
-        current.vruntime += 2;  // Apply the constant quantum (increase by 2)
-        
-        // Re-insert the task with the updated vruntime, which will reorder it automatically
-        taskTree.insert(current);
+        current.executedTime += timeSlice;
+        current.vruntime += timeSlice;
 
-        displayTasks(taskTree);
+        cout << "→ Executed: " << current.executedTime << "/" << current.burstTime
+             << " | VRuntime: " << current.vruntime << "\n\n";
     }
+
+    cout << "All processes completed.\n";
+}
+
+int main() {
+    vector<Process> processes = {
+        {1, 10},
+        {2, 20},
+        {3, 15}
+    };
+
+    int timeSlice = 5; // Simulated time slice (ms)
+
+    simulateCFS(processes, timeSlice);
 
     return 0;
 }
